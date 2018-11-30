@@ -5,6 +5,8 @@ import Circle from 'ol/style/circle';
 import Icon from 'ol/style/icon';
 import RegularShape from 'ol/style/regularshape';
 
+let icons = {};
+
 /**
  * @private
  * @param  {string} hex   eg #AA00FF
@@ -81,9 +83,30 @@ function lineStyle(linesymbolizer) {
 function pointStyle(pointsymbolizer) {
   const { graphic: style } = pointsymbolizer;
   if (style.externalgraphic && style.externalgraphic.onlineresource) {
-    return new Style({
-      image: new Icon({ src: style.externalgraphic.onlineresource }),
-    });
+    const src = style.externalgraphic.onlineresource;
+    if (!icons[src]) {
+      icons[src] = {
+        src: src
+      };
+      const img =  new Image();
+      img.onload = () => {
+        const side = img.naturalWidth > img.naturalHeight ? img.naturalWidth : img.naturalHeight;
+        icons[src] = {
+          src: src,
+          side
+        };
+      };
+      img.setAttribute('src', src);
+    }
+
+    return icons[src].side === undefined ?
+      new Style()
+      : new Style({
+        image: new Icon({
+          src: icons[src].src,
+          scale: style.size / icons[src].side || 1,
+        })
+      });
   }
   const fill = new Fill({
     color: 'black',

@@ -5,8 +5,6 @@ import Circle from 'ol/style/circle';
 import Icon from 'ol/style/icon';
 import RegularShape from 'ol/style/regularshape';
 
-let icons = {};
-
 /**
  * @private
  * @param  {string} hex   eg #AA00FF
@@ -80,32 +78,21 @@ function lineStyle(linesymbolizer) {
   });
 }
 
-function pointStyle(pointsymbolizer) {
+function pointStyle(pointsymbolizer, iconsData) {
   const { graphic: style } = pointsymbolizer;
   if (style.externalgraphic && style.externalgraphic.onlineresource) {
     const src = style.externalgraphic.onlineresource;
-    if (!icons[src]) {
-      icons[src] = {
-        src: src
-      };
-      const img =  new Image();
-      img.onload = () => {
-        const side = img.naturalWidth > img.naturalHeight ? img.naturalWidth : img.naturalHeight;
-        icons[src] = {
-          src: src,
-          side
-        };
-      };
-      img.setAttribute('src', src);
-    }
-
-    return icons[src].side === undefined ?
-      new Style()
+    return !iconsData || !iconsData[src] || iconsData[src].maxSide === undefined
+      ? new Style({
+        image: new Icon({
+          src: style.externalgraphic.onlineresource,
+        }),
+      })
       : new Style({
         image: new Icon({
-          src: icons[src].src,
-          scale: style.size / icons[src].side || 1,
-        })
+          src: iconsData[src].src,
+          scale: style.size / iconsData[src].maxSide || 1,
+        }),
       });
   }
   const fill = new Fill({
@@ -168,7 +155,7 @@ function pointStyle(pointsymbolizer) {
  * @param {string} type geometry type, @see {@link http://geojson.org|geojson}
  * @return ol.style.Style or array of it
  */
-export default function OlStyler(GeometryStyles, type = 'Polygon') {
+export default function OlStyler(GeometryStyles, type = 'Polygon', iconsData) {
   const { polygon, line, point } = GeometryStyles;
   let styles = [];
   switch (type) {
@@ -187,7 +174,7 @@ export default function OlStyler(GeometryStyles, type = 'Polygon') {
     case 'Point':
     case 'MultiPoint':
       for (let j = 0; j < point.length; j += 1) {
-        styles.push(pointStyle(point[j]));
+        styles.push(pointStyle(point[j], iconsData));
       }
       break;
     default:

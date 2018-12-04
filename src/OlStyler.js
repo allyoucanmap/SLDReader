@@ -4,6 +4,7 @@ import Stroke from 'ol/style/stroke';
 import Circle from 'ol/style/circle';
 import Icon from 'ol/style/icon';
 import RegularShape from 'ol/style/regularshape';
+import Text from 'ol/style/text';
 
 /**
  * @private
@@ -148,6 +149,87 @@ function pointStyle(pointsymbolizer, iconsData) {
   });
 }
 
+const parseText = {
+  text: part => part,
+  propertyname: (part, { properties } = {}) => properties[part] || '',
+};
+
+function textStyle(textsymbolizer, fature, type) {
+  if (textsymbolizer && textsymbolizer.label) {
+    const label = textsymbolizer.label.length
+      ? textsymbolizer.label
+      : [textsymbolizer.label];
+
+    const text = label.reduce((string, part) => {
+      const keys = Object.keys(part);
+      return string + (keys && parseText[keys[0]]
+        ? parseText[keys[0]](part[keys[0]], fature)
+        : '');
+    }, '');
+
+    const fill = textsymbolizer.fill ? (textsymbolizer.fill.css || textsymbolizer.fill.svg) : {};
+    const halo = textsymbolizer.halo && textsymbolizer.halo.fill
+      ? (textsymbolizer.halo.fill.css || textsymbolizer.halo.fill.svg)
+      : {};
+    /* const haloRadius = textsymbolizer.halo && textsymbolizer.halo.radius
+      ? textsymbolizer.halo.radius
+      : 1; */
+    const {
+      fontFamily = 'sans-serif',
+      fontSize = 10,
+      fontStyle = '',
+      fontWeight = '',
+    } = textsymbolizer.font && textsymbolizer.font.css ? textsymbolizer.font.css : {};
+
+    const pointplacement = textsymbolizer && textsymbolizer.labelplacement
+      && textsymbolizer.labelplacement.pointplacement
+      ? textsymbolizer.labelplacement.pointplacement
+      : {};
+    const displacement = pointplacement && pointplacement.displacement
+      ? pointplacement.displacement
+      : {};
+    const offsetX = displacement.displacementx
+      ? displacement.displacementx
+      : 0;
+    const offsetY = displacement.displacementy
+      ? displacement.displacementy
+      : 0;
+    const rotation = pointplacement.rotation
+      ? pointplacement.rotation
+      : 0;
+    const vendoroptions = textsymbolizer.vendoroption
+      ? textsymbolizer.vendoroption
+      : {};
+    const followLine = vendoroptions.followline === 'true' ? 'line' : 'point';
+    const placement = type === 'point' ? 'point' : followLine;
+
+    return new Style({
+      text: new Text({
+        text,
+        font: `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`,
+        offsetX,
+        offsetY,
+        rotation,
+        placement,
+        textAlign: 'center',
+        textBaseline: 'middle',
+        fill: new Fill({
+          color: fill.fillOpacity && fill.fill && fill.fill.slice(0, 1) === '#'
+            ? hexToRGB(fill.fill, fill.fillOpacity)
+            : fill.fill,
+        }),
+        stroke: new Stroke({
+          color: halo.fillOpacity && halo.fill && halo.fill.slice(0, 1) === '#'
+            ? hexToRGB(halo.fill, halo.fillOpacity)
+            : halo.fill,
+          width: 1,
+        }),
+      }),
+    });
+  }
+  return new Style({});
+}
+
 /**
  * Create openlayers style
  * @example OlStyler(getGeometryStyles(rules), geojson.geometry.type);
@@ -155,8 +237,8 @@ function pointStyle(pointsymbolizer, iconsData) {
  * @param {string} type geometry type, @see {@link http://geojson.org|geojson}
  * @return ol.style.Style or array of it
  */
-export default function OlStyler(GeometryStyles, type = 'Polygon', iconsData) {
-  const { polygon, line, point } = GeometryStyles;
+export default function OlStyler(GeometryStyles, type = 'Polygon', properties, iconsData) {
+  const { polygon, line, point, text } = GeometryStyles;
   let styles = [];
   switch (type) {
     case 'Polygon':
@@ -164,17 +246,26 @@ export default function OlStyler(GeometryStyles, type = 'Polygon', iconsData) {
       for (let i = 0; i < polygon.length; i += 1) {
         styles.push(polygonStyle(polygon[i]));
       }
+      for (let j = 0; j < text.length; j += 1) {
+        styles.push(textStyle(text[j], { properties }, 'polygon'));
+      }
       break;
     case 'LineString':
     case 'MultiLineString':
       for (let j = 0; j < line.length; j += 1) {
         styles.push(lineStyle(line[j]));
       }
+      for (let j = 0; j < text.length; j += 1) {
+        styles.push(textStyle(text[j], { properties }, 'line'));
+      }
       break;
     case 'Point':
     case 'MultiPoint':
       for (let j = 0; j < point.length; j += 1) {
         styles.push(pointStyle(point[j], iconsData));
+      }
+      for (let j = 0; j < text.length; j += 1) {
+        styles.push(textStyle(text[j], { properties }, 'point'));
       }
       break;
     default:

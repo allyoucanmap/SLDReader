@@ -171,9 +171,9 @@ function textStyle(textsymbolizer, fature, type) {
     const halo = textsymbolizer.halo && textsymbolizer.halo.fill
       ? (textsymbolizer.halo.fill.css || textsymbolizer.halo.fill.svg)
       : {};
-    /* const haloRadius = textsymbolizer.halo && textsymbolizer.halo.radius
-      ? textsymbolizer.halo.radius
-      : 1; */
+    const haloRadius = textsymbolizer.halo && textsymbolizer.halo.radius
+      ? parseFloat(textsymbolizer.halo.radius)
+      : 1;
     const {
       fontFamily = 'sans-serif',
       fontSize = 10,
@@ -213,16 +213,19 @@ function textStyle(textsymbolizer, fature, type) {
         placement,
         textAlign: 'center',
         textBaseline: 'middle',
-        fill: new Fill({
-          color: fill.fillOpacity && fill.fill && fill.fill.slice(0, 1) === '#'
-            ? hexToRGB(fill.fill, fill.fillOpacity)
-            : fill.fill,
-        }),
         stroke: new Stroke({
           color: halo.fillOpacity && halo.fill && halo.fill.slice(0, 1) === '#'
             ? hexToRGB(halo.fill, halo.fillOpacity)
             : halo.fill,
-          width: 1,
+          // wrong position width radius equal to 2 or 4
+          width: (haloRadius === 2 || haloRadius === 4)
+            ? haloRadius - 0.00001
+            : haloRadius,
+        }),
+        fill: new Fill({
+          color: fill.fillOpacity && fill.fill && fill.fill.slice(0, 1) === '#'
+            ? hexToRGB(fill.fill, fill.fillOpacity)
+            : fill.fill,
         }),
       }),
     });

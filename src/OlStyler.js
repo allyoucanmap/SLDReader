@@ -194,14 +194,15 @@ function textStyle(textsymbolizer, fature, type) {
     const offsetY = displacement.displacementy
       ? displacement.displacementy
       : 0;
+    const lineplacement = textsymbolizer && textsymbolizer.labelplacement
+      && textsymbolizer.labelplacement.lineplacement
+      ? textsymbolizer.labelplacement.lineplacement
+      : null;
     const rotation = pointplacement.rotation
       ? pointplacement.rotation
       : 0;
-    const vendoroptions = textsymbolizer.vendoroption
-      ? textsymbolizer.vendoroption
-      : {};
-    const followLine = vendoroptions.followline === 'true' ? 'line' : 'point';
-    const placement = type === 'point' ? 'point' : followLine;
+
+    const placement = type !== 'point' && lineplacement ? 'line' : 'point';
 
     return new Style({
       text: new Text({

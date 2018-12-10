@@ -188,6 +188,8 @@ const parsers = {
   Radius: addPropWithTextContent,
   LabelPlacement: addProp,
   PointPlacement: addProp,
+  LinePlacement: addProp,
+  PerpendicularOffset: addPropWithTextContent,
   AnchorPoint: addProp,
   AnchorPointX: addPropWithTextContent,
   AnchorPointY: addPropWithTextContent,

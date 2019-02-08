@@ -24,15 +24,7 @@ function hexToRGB(hex, alpha) {
 function polygonStyle(style) {
   const stroke = style.stroke && (style.stroke.css || style.stroke.svg);
   const fill = style.fill && (style.fill.css || style.fill.svg);
-  return new Style({
-    fill:
-      fill
-      && new Fill({
-        color:
-          fill.fillOpacity && fill.fill && fill.fill.slice(0, 1) === '#'
-            ? hexToRGB(fill.fill, fill.fillOpacity)
-            : fill.fill,
-      }),
+  const strokStyle = new Style({
     stroke:
       stroke
       && new Stroke({
@@ -47,6 +39,20 @@ function polygonStyle(style) {
         lineJoin: stroke.strokeLinejoin && stroke.strokeLinejoin,
       }),
   });
+  const fillStyle = new Style({
+    fill:
+      fill
+      && new Fill({
+        color:
+          fill.fillOpacity && fill.fill && fill.fill.slice(0, 1) === '#'
+            ? hexToRGB(fill.fill, fill.fillOpacity)
+            : fill.fill,
+      }),
+  });
+  return [
+    strokStyle,
+    fillStyle,
+  ];
 }
 
 /**
@@ -196,7 +202,7 @@ export default function OlStyler(GeometryStyles, type = 'Polygon') {
     case 'Polygon':
     case 'MultiPolygon':
       for (let i = 0; i < polygon.length; i += 1) {
-        styles.push(polygonStyle(polygon[i]));
+        styles.push(...polygonStyle(polygon[i]));
       }
       break;
     case 'LineString':
